@@ -22,9 +22,12 @@ clean:
 depend:
 	mkdep -MM $(SRCS) $(TSRCS)
 
+loc:
+	@cat $(SRCS) | wc -l
+
 tests: $(TESTS)
 
 t_peers: t_peers.o peers.o pubk2ip6.o utils.o
 	$(CC) $^$> $(LDFLAGS) -o $@
 
-.PHONY: all clean depend tests
+.PHONY: all clean depend loc tests
