@@ -167,6 +167,33 @@ static char *btxid(char *p)
 	return p + 10;
 }
 
+static int checkTimeout(int fd, int seconds)
+{
+	/* timeout to avoid blocking */
+	struct timeval timeout;
+	int n, ret = -1;
+	fd_set rfds;
+
+	FD_ZERO(&rfds);
+	FD_SET(0, &rfds);
+	timeout.tv_sec = seconds;
+	timeout.tv_usec = 0;
+
+	n = select(1, &rfds, NULL, NULL, &timeout);
+
+	if (n == 0) {
+		write(2, "socket timeout\n", 15);
+		goto out;
+	} else if (n < 0) {
+		puterr("socket select", errno);
+		goto out;
+	}
+
+	ret = 0;
+out:
+	return ret;
+}
+
 static int reqCookie(int fd, char *out)
 {
 	char buf[1024], *p;
@@ -186,24 +213,8 @@ static int reqCookie(int fd, char *out)
 		goto out;
 	}
 
-	/* timeout to avoid blocking */
-	struct timeval timeout;
-	fd_set rfds;
-
-	FD_ZERO(&rfds);
-	FD_SET(0, &rfds);
-	timeout.tv_sec = 2;
-	timeout.tv_usec = 0;
-
-	n = select(1, &rfds, NULL, NULL, &timeout);
-
-	if (n == 0) {
-		write(2, "socket timeout\n", 15);
+	if (checkTimeout(fd, 2) < 0)
 		goto out;
-	} else if (n < 0) {
-		puterr("socket select", errno);
-		goto out;
-	}
 
 	if ((n = read(fd, buf, sizeof(buf))) < 0) {
 		puterr("socket read", errno);
@@ -262,6 +273,9 @@ static int reqPages(int fd, const char *func, parsePage *pfunc)
 		sha256hex(h, req, n);
 
 		if ((n = write(fd, req, n)) < 0)
+			goto out;
+
+		if (checkTimeout(fd, 1) < 0)
 			goto out;
 
 		if ((n = read(fd, page, sizeof(page))) < 0)
