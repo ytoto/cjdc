@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,21 @@ static inline void usage(void)
 	write(1, USAGE, sizeof(USAGE) - 1);
 }
 
+void puterr(const char *msg, int _errno_)
+{
+	const char *p = msg;
+	char buf[1024], *q;
+
+	for (q = buf; *p; *q++ = *p++);
+	*q++ = ':';
+	*q++ = ' ';
+	write(2, buf, q - buf);
+	p = strerror(_errno_);
+	for (q = buf; *p; *q++ = *p++);
+	*q++ = '\n';
+	write(2, buf, q - buf);
+}
+
 static inline int getAdminFile(void)
 {
 	static const char cjdnsadmin[] = "/.cjdnsadmin";
@@ -32,12 +48,17 @@ static inline int getAdminFile(void)
 	char buf[1024];
 	char *p = getenv("HOME");
 	char *q = buf;
+	int fd;
 
 	while (*p)
 		*q++ = *p++;
 
 	memcpy(q, cjdnsadmin, sizeof(cjdnsadmin));
-	return open(buf, O_RDONLY);
+
+	if ((fd = open(buf, O_RDONLY)) < 0)
+		puterr(buf, errno);
+
+	return fd;
 }
 
 static inline int connectWithAdminInfo(void)
@@ -52,6 +73,7 @@ static inline int connectWithAdminInfo(void)
 		goto out;
 
 	if ((n = read(fd, buf, sizeof(buf))) < 0) {
+		puterr("read config", errno);
 		fd = -1;
 		goto out;
 	}
@@ -59,11 +81,11 @@ static inline int connectWithAdminInfo(void)
 	close(fd);
 
 	char *p = buf, *q = buf;
-	int j = 0, state = 0;
+	int i, j = 0, state = 0;
 
 	passwd[0] = '\0';
 
-	for (int i = 0; i < n; ++i, ++p) {
+	for (i = 0; i < n; ++i, ++p) {
 		if (*p == '"')  {
 			if (state & inpassv) {
 				break;
@@ -89,13 +111,17 @@ static inline int connectWithAdminInfo(void)
 	struct addrinfo hints = { .ai_socktype = SOCK_DGRAM };
 	struct addrinfo *res = NULL;
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		puterr("socket", errno);
 		goto out;
+	}
 
-	if (getaddrinfo(node, port, &hints, &res) == 0)
+	if (getaddrinfo(node, port, &hints, &res) == 0) {
 		for (; res; res = res->ai_next)
 			if (connect(fd, res->ai_addr, res->ai_addrlen) == 0)
 				break;
+	} else
+		puterr("getaddrinfo", errno);
 
 	if (res == NULL) {
 		close(fd);
@@ -156,6 +182,8 @@ static int reqCookie(int fd, char *out)
 
 	if ((n = write(fd, buf, p - buf)) < 0)
 		goto out;
+
+	/*TODO select timeout */
 
 	if ((n = read(fd, buf, sizeof(buf))) < 0)
 		goto out;
@@ -237,15 +265,21 @@ out:
 
 int main(int ac, char *av[])
 {
-	int fd = connectWithAdminInfo();
 	char buf[1024], *cmd = "", *p;
-	int ret = 1;
-
-	if (fd < 0)
-		goto out;
+	int fd, ret = 1;
 
 	if (ac > 1)
 		cmd = av[1];
+
+	switch (cmd[0]) {
+	case 'd':
+	case 'p':
+		fd = connectWithAdminInfo();
+
+		if (fd < 0)
+			goto out;
+
+	}
 
 	switch (cmd[0]) {
 	case 'd':

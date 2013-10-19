@@ -25,8 +25,9 @@ char *u2a(char *p, unsigned int x)
 char *a2u(char *p, unsigned int *x)
 {
 	unsigned int u = 0;
+	char c;
 
-	for (char c = *p; c >= '0' && c <= '9'; c = *++p) {
+	for (c = *p; c >= '0' && c <= '9'; c = *++p) {
 		u *= 10;
 		u += c - '0';
 	}
@@ -40,12 +41,13 @@ void sha256hex(char *out, const char *buf, int size)
 	unsigned char bin[32], *p = bin;
 	sha2_context ctx;
 	char *q = out;
+	int i;
 
 	sha2_starts(&ctx, 0);
 	sha2_update(&ctx, (unsigned char *)buf, size);
 	sha2_finish(&ctx, bin);
 
-	for (int i = 0; i < 32; ++i, ++p) {
+	for (i = 0; i < 32; ++i, ++p) {
 		unsigned char x = *p;
 
 		*q++ = xdigits[x >> 4];
