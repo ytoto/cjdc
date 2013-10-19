@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netdb.h>
 
 #include "cjdc.h"
@@ -180,13 +181,34 @@ static int reqCookie(int fd, char *out)
 	p = btxid(p);
 	*p++ = 'e';
 
-	if ((n = write(fd, buf, p - buf)) < 0)
+	if ((n = write(fd, buf, p - buf)) < 0) {
+		puterr("socket write", errno);
 		goto out;
+	}
 
-	/*TODO select timeout */
+	/* timeout to avoid blocking */
+	struct timeval timeout;
+	fd_set rfds;
 
-	if ((n = read(fd, buf, sizeof(buf))) < 0)
+	FD_ZERO(&rfds);
+	FD_SET(0, &rfds);
+	timeout.tv_sec = 2;
+	timeout.tv_usec = 0;
+
+	n = select(1, &rfds, NULL, NULL, &timeout);
+
+	if (n == 0) {
+		write(2, "socket timeout\n", 15);
 		goto out;
+	} else if (n < 0) {
+		puterr("socket select", errno);
+		goto out;
+	}
+
+	if ((n = read(fd, buf, sizeof(buf))) < 0) {
+		puterr("socket read", errno);
+		goto out;
+	}
 
 	for (i = 0, p = buf; i < n; ++i, ++p) {
 		if (*p == ':') {
