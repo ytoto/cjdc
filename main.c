@@ -169,17 +169,17 @@ static char *btxid(char *p)
 
 static int checkTimeout(int fd, int seconds)
 {
-	/* timeout to avoid blocking */
+	/* timeout to avoid blocking read */
 	struct timeval timeout;
 	int n, ret = -1;
 	fd_set rfds;
 
 	FD_ZERO(&rfds);
-	FD_SET(0, &rfds);
+	FD_SET(fd, &rfds);
 	timeout.tv_sec = seconds;
 	timeout.tv_usec = 0;
 
-	n = select(1, &rfds, NULL, NULL, &timeout);
+	n = select(fd + 1, &rfds, NULL, NULL, &timeout);
 
 	if (n == 0) {
 		write(2, "socket timeout\n", 15);
