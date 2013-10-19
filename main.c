@@ -302,7 +302,7 @@ out:
 int main(int ac, char *av[])
 {
 	char buf[1024], *cmd = "", *p;
-	int fd, ret = 1;
+	int fd = -1, ret = 1;
 
 	if (ac > 1)
 		cmd = av[1];
@@ -340,7 +340,8 @@ int main(int ac, char *av[])
 	if (ret < 0)
 		ret = -ret;
 
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 out:
 	return ret;
 }
