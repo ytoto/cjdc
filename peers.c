@@ -1,3 +1,4 @@
+#include <string.h>
 #include <unistd.h>
 
 #include "cjdc.h"
@@ -200,13 +201,18 @@ int peers(char *page, unsigned int size)
 				++p;
 
 				/* print peer */
-				if (pk == NULL)
-					goto err; //TODO print error
+				if (pk == NULL) {
+					pk = ":";
+					goto err;
+				}
 
 				while (*pk++ != ':');
 
-				if (pubk2ip6(pk, ip6) < 0)
+				if (pubk2ip6(pk, ip6) < 0) {
+					memset(ip6, ' ', 39);
+					ip6[0] = '?';
 					goto err;
+				}
 
 				ip6[39] = ' ';
 				write(1, ip6, 40);
@@ -217,13 +223,12 @@ int peers(char *page, unsigned int size)
 				bputi(out);
 
 				if (sta) {
-					sta += 3;
+					while (*sta++ != ':');
 					sta[4] = ' ';
 				} else
 					sta = "???? ";
 
 				write(1, sta, 5);
-				bputs(sta);
 				bputi(dup);
 				bputi(los);
 				bputi(oor);
