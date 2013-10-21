@@ -1,3 +1,3 @@
-file t_peers2
-b bputi
+file t_peers
+b peers
 r peers
