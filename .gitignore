@@ -1,4 +1,5 @@
 /cjdc
-/t_*
+/t_peers
+/t_peers2
 *.o
 *.swp
