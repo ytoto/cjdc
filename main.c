@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netdb.h>
 
 #include "cjdc.h"
@@ -25,6 +27,21 @@ static inline void usage(void)
 	write(1, USAGE, sizeof(USAGE) - 1);
 }
 
+void puterr(const char *msg, int _errno_)
+{
+	const char *p = msg;
+	char buf[1024], *q;
+
+	for (q = buf; *p; *q++ = *p++);
+	*q++ = ':';
+	*q++ = ' ';
+	write(2, buf, q - buf);
+	p = strerror(_errno_);
+	for (q = buf; *p; *q++ = *p++);
+	*q++ = '\n';
+	write(2, buf, q - buf);
+}
+
 static inline int getAdminFile(void)
 {
 	static const char cjdnsadmin[] = "/.cjdnsadmin";
@@ -32,12 +49,17 @@ static inline int getAdminFile(void)
 	char buf[1024];
 	char *p = getenv("HOME");
 	char *q = buf;
+	int fd;
 
 	while (*p)
 		*q++ = *p++;
 
 	memcpy(q, cjdnsadmin, sizeof(cjdnsadmin));
-	return open(buf, O_RDONLY);
+
+	if ((fd = open(buf, O_RDONLY)) < 0)
+		puterr(buf, errno);
+
+	return fd;
 }
 
 static inline int connectWithAdminInfo(void)
@@ -52,6 +74,7 @@ static inline int connectWithAdminInfo(void)
 		goto out;
 
 	if ((n = read(fd, buf, sizeof(buf))) < 0) {
+		puterr("read config", errno);
 		fd = -1;
 		goto out;
 	}
@@ -59,11 +82,11 @@ static inline int connectWithAdminInfo(void)
 	close(fd);
 
 	char *p = buf, *q = buf;
-	int j = 0, state = 0;
+	int i, j = 0, state = 0;
 
 	passwd[0] = '\0';
 
-	for (int i = 0; i < n; ++i, ++p) {
+	for (i = 0; i < n; ++i, ++p) {
 		if (*p == '"')  {
 			if (state & inpassv) {
 				break;
@@ -89,13 +112,17 @@ static inline int connectWithAdminInfo(void)
 	struct addrinfo hints = { .ai_socktype = SOCK_DGRAM };
 	struct addrinfo *res = NULL;
 
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		puterr("socket", errno);
 		goto out;
+	}
 
-	if (getaddrinfo(node, port, &hints, &res) == 0)
+	if (getaddrinfo(node, port, &hints, &res) == 0) {
 		for (; res; res = res->ai_next)
 			if (connect(fd, res->ai_addr, res->ai_addrlen) == 0)
 				break;
+	} else
+		puterr("getaddrinfo", errno);
 
 	if (res == NULL) {
 		close(fd);
@@ -140,6 +167,33 @@ static char *btxid(char *p)
 	return p + 10;
 }
 
+static int checkTimeout(int fd, int seconds)
+{
+	/* timeout to avoid blocking read */
+	struct timeval timeout;
+	int n, ret = -1;
+	fd_set rfds;
+
+	FD_ZERO(&rfds);
+	FD_SET(fd, &rfds);
+	timeout.tv_sec = seconds;
+	timeout.tv_usec = 0;
+
+	n = select(fd + 1, &rfds, NULL, NULL, &timeout);
+
+	if (n == 0) {
+		write(2, "socket timeout\n", 15);
+		goto out;
+	} else if (n < 0) {
+		puterr("socket select", errno);
+		goto out;
+	}
+
+	ret = 0;
+out:
+	return ret;
+}
+
 static int reqCookie(int fd, char *out)
 {
 	char buf[1024], *p;
@@ -154,11 +208,18 @@ static int reqCookie(int fd, char *out)
 	p = btxid(p);
 	*p++ = 'e';
 
-	if ((n = write(fd, buf, p - buf)) < 0)
+	if ((n = write(fd, buf, p - buf)) < 0) {
+		puterr("socket write", errno);
+		goto out;
+	}
+
+	if (checkTimeout(fd, 2) < 0)
 		goto out;
 
-	if ((n = read(fd, buf, sizeof(buf))) < 0)
+	if ((n = read(fd, buf, sizeof(buf))) < 0) {
+		puterr("socket read", errno);
 		goto out;
+	}
 
 	for (i = 0, p = buf; i < n; ++i, ++p) {
 		if (*p == ':') {
@@ -214,6 +275,9 @@ static int reqPages(int fd, const char *func, parsePage *pfunc)
 		if ((n = write(fd, req, n)) < 0)
 			goto out;
 
+		if (checkTimeout(fd, 1) < 0)
+			goto out;
+
 		if ((n = read(fd, page, sizeof(page))) < 0)
 			goto out;
 
@@ -237,15 +301,21 @@ out:
 
 int main(int ac, char *av[])
 {
-	int fd = connectWithAdminInfo();
 	char buf[1024], *cmd = "", *p;
-	int ret = 1;
-
-	if (fd < 0)
-		goto out;
+	int fd = -1, ret = 1;
 
 	if (ac > 1)
 		cmd = av[1];
+
+	switch (cmd[0]) {
+	case 'd':
+	case 'p':
+		fd = connectWithAdminInfo();
+
+		if (fd < 0)
+			goto out;
+
+	}
 
 	switch (cmd[0]) {
 	case 'd':
@@ -270,7 +340,8 @@ int main(int ac, char *av[])
 	if (ret < 0)
 		ret = -ret;
 
-	close(fd);
+	if (fd >= 0)
+		close(fd);
 out:
 	return ret;
 }
