@@ -1,3 +1,3 @@
-file cjdc
-b main
+file t_peers2
+b bputi
 r peers
