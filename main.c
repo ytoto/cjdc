@@ -307,6 +307,18 @@ int main(int ac, char *av[])
 	if (ac > 1)
 		cmd = av[1];
 
+	/* try to convert cjdroute publicKey to IPv6 */
+	for (p = cmd; *p; ++p);
+
+	if (p[-1] == 'k' && p[-2] == '.') {
+		if ((ret = pubk2ip6(cmd, buf)) == 0) {
+			buf[39] = '\n';
+			write(1, buf, 40);
+		}
+
+		goto out;
+	}
+
 	switch (cmd[0]) {
 	case 'd':
 	case 'p':
@@ -318,30 +330,21 @@ int main(int ac, char *av[])
 	}
 
 	switch (cmd[0]) {
-	case 'd':
+	case 'd': /* dump */
 		ret = reqPages(fd, "NodeStore_dumpTable", dump);
 		break;
-	case 'p':
+	case 'p': /* peers */
 		ret = reqPages(fd, "InterfaceController_peerStats", peers);
 		break;
-	default:
-		/* try to convert cjdroute publicKey */
-		for (p = cmd; *p; ++p);
-
-		if (p[-1] == 'k' && p[-2] == '.') {
-			if ((ret = pubk2ip6(cmd, buf)) >= 0) {
-				buf[39] = '\n';
-				write(1, buf, 40);
-			}
-		} else
-			usage();
+	default:  /* help */
+		usage();
 	}
-
+out:
 	if (ret < 0)
 		ret = -ret;
 
 	if (fd >= 0)
 		close(fd);
-out:
+
 	return ret;
 }
