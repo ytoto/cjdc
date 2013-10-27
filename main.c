@@ -314,7 +314,8 @@ int main(int ac, char *av[])
 		if ((ret = pubk2ip6(cmd, buf)) == 0) {
 			buf[39] = '\n';
 			write(1, buf, 40);
-		}
+		} else
+			puterr(cmd, EINVAL);
 
 		goto out;
 	}

@@ -1,5 +1,7 @@
 #include <unistd.h>
 
+#include "cjdc.h"
+
 int dump(char *page, unsigned int size)
 {
 	int more = 0;

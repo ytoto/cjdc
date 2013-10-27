@@ -2,8 +2,8 @@ CC	= gcc
 CFLAGS	= -g -Wall
 LDFLAGS	=
 
-OBJS	= main.o utils.o pubk2ip6.o dump.o peers.o
-SRCS	= main.c utils.c pubk2ip6.c dump.c peers.c
+OBJS	= main.o butils.o utils.o pubk2ip6.o dump.o peers.o
+SRCS	= main.c butils.c utils.c pubk2ip6.c dump.c peers.c
 
 TESTS	=\
 	t_peers		\
@@ -22,12 +22,9 @@ clean:
 depend:
 	mkdep -MM $(SRCS) $(TSRCS)
 
-loc:
-	@cat $(SRCS) | wc -l
-
 tests: $(TESTS)
 
-t_peers: t_peers.o peers.o pubk2ip6.o utils.o
+t_peers: t_peers.o peers.o pubk2ip6.o butils.o utils.o
 	$(CC) $^$> $(LDFLAGS) -o $@
 
-.PHONY: all clean depend loc tests
+.PHONY: all clean depend tests
