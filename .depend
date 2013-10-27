@@ -1,6 +1,7 @@
 main.o: main.c cjdc.h
+butils.o: butils.c cjdc.h
 utils.o: utils.c sha2.c polarssl/config.h polarssl/sha2.h
 pubk2ip6.o: pubk2ip6.c Base32.h sha4.c polarssl/config.h polarssl/sha4.h
-dump.o: dump.c
-peers.o: peers.c cjdc.h
+dump.o: dump.c cjdc.h
+peers.o: peers.c butils.h cjdc.h
 t_peers.o: t_peers.c cjdc.h
