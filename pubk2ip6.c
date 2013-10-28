@@ -17,6 +17,11 @@ int pubk2ip6(const char *pk, char *ip6/*40*/)
 	sha4_context sha4ctx;
 	int i, ret;
 
+	if (pk == NULL) {
+		ret = Key_parse_INVALID;
+		goto out;
+	}
+
 	while (*p++ != '.');
 
 	if (*p-- != 'k') {
