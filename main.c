@@ -154,7 +154,7 @@ static char *badds(char *p, const char *s)
 
 static char *btxid(char *p)
 {
-	static char txid[10] = "ABCDEABCDE";
+	static char txid[10] = "@BCDEABCDE";
 	char *q = txid;
 
 	p = badds(p, "txid");

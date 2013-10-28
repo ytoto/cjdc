@@ -6,6 +6,7 @@ enum {
 	inpassv		= (1 << 4),
 	inpeers		= (1 << 5),
 	inquote		= (1 << 6),
+	intable		= (1 << 7),
 };
 
 extern char *a2u(char *p, unsigned int *x);
