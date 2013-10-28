@@ -9,11 +9,10 @@ int peers(char *page, unsigned int size)
 	char ip6[40], *p = page, *end = page + size;
 	int more = 0, state = 0;
 
-	in = out = dup = los = oor = NULL;
-	pk = sta = swi = usr = NULL;
-
 	if (*p++ != 'd')
 		goto err;
+
+	goto init;
 
 	while (p < end) {
 		char c =*p;
@@ -58,7 +57,7 @@ int peers(char *page, unsigned int size)
 					bputs(usr);
 
 				write(1, "\n", 1);
-				in = out = dup = los = oor = NULL;
+init:				in = out = dup = los = oor = NULL;
 				pk = sta = swi = usr = NULL;
 				break;
 			case '1':

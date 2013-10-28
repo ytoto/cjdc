@@ -28,10 +28,8 @@ char *bskip(char *p)
 			p = a2u(p, &u);
 			++p;
 			p += u;
-		} else {
-err:			write(1, "error\n", 6);//TODO drop msg
-			p = NULL;
-		}
+		} else
+err:			p = NULL;
 	}
 
 	return p;
