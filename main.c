@@ -11,6 +11,7 @@
 #include <netdb.h>
 
 #include "cjdc.h"
+#include "utils.h"
 
 static char passwd[256]; /* and space for cookie */
 static int passwdlen;

@@ -1,19 +1,21 @@
 #include <unistd.h>
 
-#include "butils.h"
 #include "cjdc.h"
+#include "utils.h"
 
 int dump(char *page, unsigned int size)
 {
-	char *p = page, *end = page + size, *q;
+	char *p = page, *end = page + size;
 	char *cnt, *ip, *path, *link, *ver;
+	char str[1024], *q = str;
 	int more = 0, state = 0;
 	unsigned int u;
+
+	cnt = NULL;
 
 	if (*p++ != 'd')
 		goto err;
 
-	cnt = NULL;
 	goto init;
 
 	while (p < end) {
@@ -24,17 +26,8 @@ int dump(char *page, unsigned int size)
 			case 'e': /* end of dict */
 				state &= ~indict;
 				++p;
-
-				if (!ip || *ip++ != '3' || *ip++ != '9' || *ip++ != ':')
-					goto init;
-				
-				if (!path || *path++ != '1' || *path++ != '9' || *path++ != ':')
-					goto init;
-
-				ip[39] = ' ';
-				write(1, ip, 40);
-				path[19] = ' ';
-				write(1, path, 20);
+				q = bputs(q, ip, 40);
+				q = bputs(q, path, 20);
 
 				if (link) {
 					a2u(link, &u);
@@ -42,34 +35,34 @@ int dump(char *page, unsigned int size)
 					*u2a(link = ip, u) = 'e';
 				}
 
-				bputi(link);
-				bputi(ver);
-				write(1, "\n", 1);
+				q = bputi(q, link);
+				q = bputi(q, ver);
+				*q++ = '\n';
 init:				ip = path = link = ver = NULL;
 				break;
 			case '1':
 				if (p[1] == '9')
-					path = bvals(19, &p);
+					path = bgets(19, &p);
 				else
 					goto skip;
 				break;
 			case '2':
-				ip = bvals(2, &p);
+				ip = bgets(2, &p);
 				break;
 			case '4':
 				switch (p[2]) {
 				case 'l':
-					link = bvali(4, &p);
+					link = bgeti(4, &p);
 					break;
 				case 'p':
-					path = bvals(4, &p);
+					path = bgets(4, &p);
 					break;
 				default:
 					goto skip;
 				}
 				break;
 			case '7':
-				ver = bvali(7, &p);
+				ver = bgeti(7, &p);
 				break;
 			default:
 				goto skip;
@@ -114,7 +107,7 @@ init:				ip = path = link = ver = NULL;
 				goto skip;
 			case '5':
 				if (p[2] == 'c' && p[6] == 't')
-					cnt = bvali(5, &p);
+					cnt = bgeti(5, &p);
 				else
 					goto skip;
 				break;
@@ -130,11 +123,16 @@ err:			more = -1;
 	}
 out_:
 	if (cnt) {
-		write(1, "count ", 6);
-		for (q = cnt; *q != 'e'; ++q);
+		*q++ = 'c';
+		*q++ = 'o';
+		*q++ = 'u';
+		*q++ = 'n';
+		*q++ = 't';
+		*q++ = ' ';
+		for (; *cnt != 'e'; *q++ = *cnt++);
 		*q++ = '\n';
-		write(1, cnt, q - cnt);
 	}
 
+	write(1, str, q - str);
 	return more;
 }
