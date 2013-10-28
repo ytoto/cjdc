@@ -106,9 +106,10 @@ init:				ip = path = link = ver = NULL;
 
 				goto skip;
 			case '5':
-				if (p[2] == 'c' && p[6] == 't')
-					cnt = bgeti(5, &p);
-				else
+				if (p[2] == 'c' && p[6] == 't') {
+					cnt = &p[2];
+					bgeti(5, &p);
+				} else
 					goto skip;
 				break;
 			default:
@@ -123,12 +124,7 @@ err:			more = -1;
 	}
 out_:
 	if (cnt) {
-		*q++ = 'c';
-		*q++ = 'o';
-		*q++ = 'u';
-		*q++ = 'n';
-		*q++ = 't';
-		*q++ = ' ';
+		cnt[5] = ' ';
 		for (; *cnt != 'e'; *q++ = *cnt++);
 		*q++ = '\n';
 	}
