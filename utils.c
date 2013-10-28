@@ -52,7 +52,8 @@ err:		q = NULL;
 
 char *bputi(char *dst, char *p)
 {
-	char unit[] = " KMGTPEZ";/*TODO static ? */
+	static const char unit[] = " KMGTPEZ";
+
 	uint64_t m, x, y, z;
 	const char *q = p;
 	int i, n = 0, v;
