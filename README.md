@@ -1,5 +1,5 @@
 # cjdc, another cjdns admin tool
-This is a small utility, written in C language. It's still pre-alpha software.
+This is a small utility, written in C language.
 
 ## usage
 
@@ -8,4 +8,5 @@ This is a small utility, written in C language. It's still pre-alpha software.
 	commands:
 	dump		dumps the routing table
 	peers		lists connected nodes
+	<pub.k>		public key to ipv6
 
