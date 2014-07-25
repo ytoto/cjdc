@@ -76,7 +76,7 @@ init:				in = out = dup = los = oor = NULL;
 						goto skip2;
 					}
 					break;
-				case '8': /* 18:receivedOutOfRangei */
+				case '8': /* 18:receivedOutOfRange */
 					oor = bgeti(18, &p);
 					break;
 				default:
@@ -97,10 +97,10 @@ skip2:					--p;
 				else
 					goto skip;
 				break;
-			case '7': /* 7:bytesIni...e */
+			case '7': /* 7:bytesIn */
 				in = bgeti(7, &p);
 				break;
-			case '8': /* 8:bytesOuti...e */
+			case '8': /* 8:bytesOut */
 				out = bgeti(8, &p);
 				break;
 			case '9': /* 9:publicKey */
