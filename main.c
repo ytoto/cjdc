@@ -111,7 +111,7 @@ static inline int connectWithAdminInfo(void)
 	passwdlen = j;
 
 	struct addrinfo hints = { .ai_socktype = SOCK_DGRAM };
-	struct addrinfo *res = NULL;
+	struct addrinfo *res = NULL, *tres;
 
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		puterr("socket", errno);
@@ -119,8 +119,8 @@ static inline int connectWithAdminInfo(void)
 	}
 
 	if (getaddrinfo(node, port, &hints, &res) == 0) {
-		for (; res; res = res->ai_next)
-			if (connect(fd, res->ai_addr, res->ai_addrlen) == 0)
+		for (tres = res; tres; tres = tres->ai_next)
+			if (connect(fd, tres->ai_addr, tres->ai_addrlen) == 0)
 				break;
 	} else
 		puterr("getaddrinfo", errno);
@@ -128,7 +128,8 @@ static inline int connectWithAdminInfo(void)
 	if (res == NULL) {
 		close(fd);
 		fd = -1;
-	}
+	} else
+		freeaddrinfo(res);
 out:
 	return fd;
 }
