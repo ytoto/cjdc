@@ -13,7 +13,7 @@ This is a small utility, written in C language.
 ## sample output
 
 	# cjdc -v peers
-	ip6					switch               in   out state dup  los  oor user
+        ip6                                     switch               in   out state dup  los  oor user
 	fc8d:7f0e:1b26:5270:3498:cd1f:c49f:e762 0000.0000.0000.001b 751M 726M INVA   0  224    4  hal2001
 	fca7:0520:11c0:11df:5011:316e:abc1:3e37 0000.0000.0000.0019 1.5G 1.5G ESTA   0  756    0  hardax
 	fc05:1349:9fff:8e6b:c637:b9b6:4cd5:53e8 0000.0000.0000.0017 772M 765M HAND   0   36    0
