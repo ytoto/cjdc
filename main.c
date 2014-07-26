@@ -17,11 +17,15 @@ static char passwd[256]; /* and space for cookie */
 static int passwdlen;
 
 #define USAGE \
-"usage: cjdc [command]\n"	\
+"usage: cjdc [options] [command]\n"	\
 "\n"				\
 "commands:\n"			\
 "dump\t\tdumps the routing table\n"	\
 "peers\t\tlists connected nodes\n"	\
+"<pub.k>\t\tpublic key to ipv6\n"	\
+"\n"				\
+"options:\n"			\
+"-v\t\tverbose output\n"
 
 static inline void usage(void)
 {
@@ -301,10 +305,34 @@ out:
 	return n;
 }
 
+const char dump_header[] =
+"ip6\t\t\t\t\tpath                link  ver\n";
+const char peers_header[] =
+"ip6\t\t\t\t\tswitch               in   out state dup  los  oor user\n";
+
 int main(int ac, char *av[])
 {
 	char buf[1024], *cmd = "", *p;
-	int fd = -1, ret = 1;
+	int fd = -1, ret = 1, _v = 0;
+
+	/* parse options */
+	if (ac > 1) {
+		p = av[1];
+
+		if (*p++ == '-') {
+			--ac;
+			++av;
+
+			for (; *p != '\0'; ++p) {
+				switch (*p) {
+				case 'v':
+					++_v;
+				default:
+					break;
+				}
+			}
+		}
+	}
 
 	if (ac > 1)
 		cmd = av[1];
@@ -334,9 +362,15 @@ int main(int ac, char *av[])
 
 	switch (cmd[0]) {
 	case 'd': /* dump */
+		if (_v)
+			write(1, dump_header, sizeof(dump_header) - 1);
+
 		ret = reqPages(fd, "NodeStore_dumpTable", dump);
 		break;
 	case 'p': /* peers */
+		if (_v)
+			write(1, peers_header, sizeof(peers_header) - 1);
+
 		ret = reqPages(fd, "InterfaceController_peerStats", peers);
 		break;
 	default:  /* help */
