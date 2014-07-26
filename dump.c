@@ -40,28 +40,22 @@ int dump(char *page, unsigned int size)
 				*q++ = '\n';
 init:				ip = path = link = ver = NULL;
 				break;
-			case '1':
-				if (p[1] == '9')
-					path = bgets(19, &p);
-				else
-					goto skip;
-				break;
-			case '2':
+			case '2': /* ip */
 				ip = bgets(2, &p);
 				break;
 			case '4':
 				switch (p[2]) {
-				case 'l':
+				case 'l': /* link */
 					link = bgeti(4, &p);
 					break;
-				case 'p':
+				case 'p': /* path */
 					path = bgets(4, &p);
 					break;
 				default:
 					goto skip;
 				}
 				break;
-			case '7':
+			case '7': /* version */
 				ver = bgeti(7, &p);
 				break;
 			default:
