@@ -25,15 +25,15 @@ This is a small utility, written in C language.
 
 ### header description
 
-	ip6	cjdns IPv6 address
-	switch	switchLabel
-	in	bytesIn
-	out	bytesOut
-	state	link state
-	dup	duplicate packets
-	los	lostPackets
-	oor	receivedOutOfRange
-	user	the user field of the password entry in cjdroute.conf
+	ip6     cjdns IPv6 address
+	switch  switchLabel
+	in      bytesIn
+	out     bytesOut
+	state   link state
+	dup     duplicate packets
+	los     lostPackets
+	oor     receivedOutOfRange
+	user    the user field of the password entry in cjdroute.conf
 
 #### example cjdroute.conf password with user field
 	"authorizedPasswords":
