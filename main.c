@@ -240,6 +240,18 @@ out:
 	return len;
 }
 
+static char *geterror(char *p, int n)
+{
+	char *end = p + n - 7; /* searching for "5:error" */
+
+	for (; p < end; ++p) {
+		if (memcmp(p, "5:error", 7) == 0)
+			return p + 7;
+	}
+
+	return NULL;
+}
+
 typedef int parsePage(char *page, unsigned int size);
 
 static int reqPages(int fd, const char *func, parsePage *pfunc)
@@ -287,11 +299,11 @@ static int reqPages(int fd, const char *func, parsePage *pfunc)
 		if ((n = read(fd, page, sizeof(page))) < 0)
 			goto out;
 
-		if (memcmp(page, "d5:error", 8) == 0) {
+		if ((p = geterror(page, n))) {
 			/* print error */
 			unsigned int u;
 
-			p = a2u(page + 8, &u);
+			p = a2u(p, &u);
 			++p;
 			p[u++] = '\n';
 			write(1, p, u);

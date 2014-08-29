@@ -40,6 +40,9 @@ int dump(char *page, unsigned int size)
 				*q++ = '\n';
 init:				ip = path = link = ver = NULL;
 				break;
+                        case '0': /* skip leading zeros */
+skipzeros:			while (*++p == '0');
+				break;
 			case '2': /* ip */
 				ip = bgets(2, &p);
 				break;
@@ -89,6 +92,8 @@ init:				ip = path = link = ver = NULL;
 			}
 		} else {
 			switch (c) {
+			case '0':
+				goto skipzeros;
 			case '1': /* routingTable */
 				if (p[1] == '2' && p[3] == 'r')
 					state |= intable;
