@@ -245,8 +245,12 @@ static char *geterror(char *p, int n)
 	char *end = p + n - 7; /* searching for "5:error" */
 
 	for (; p < end; ++p) {
-		if (memcmp(p, "5:error", 7) == 0)
-			return p + 7;
+		if (memcmp(p, "5:error", 7) == 0) {
+			p += 7;
+
+			if (memcmp(p, "4:none", 6) != 0)
+				return p;
+		}
 	}
 
 	return NULL;
