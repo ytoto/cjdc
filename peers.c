@@ -56,6 +56,9 @@ pk_invalid:				ip6[0] = '1';
 init:				in = out = dup = los = oor = NULL;
 				pk = sta = swi = usr = NULL;
 				break;
+			case '0': /* skip leading zeros */
+skipzeros:			while (*++p == '0');
+				break;
 			case '1':
 				switch (c = *++p) {
 				case '0':
@@ -137,6 +140,8 @@ skip2:					--p;
 			}
 		} else  {
 			switch (c) {
+			case '0':
+				goto skipzeros;
 			case '4':
 				if (p[2] == 'm' && p[7] == '1')
 					more = 1;
