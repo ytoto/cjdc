@@ -3,7 +3,7 @@
 #include "cjdc.h"
 #include "utils.h"
 
-int dump(char *page, unsigned int size)
+int dump(char *page, unsigned int size, cjdc_ctx *ctx)
 {
 	char *p = page, *end = page + size;
 	char *cnt, *ip, *path, *link, *ver;
@@ -123,9 +123,12 @@ err:			more = -1;
 	}
 out_:
 	if (cnt) {
+		/* copy 'count xxx\n' to ctx->vinfo */
 		cnt[5] = ' ';
-		for (; *cnt != 'e'; *q++ = *cnt++);
-		*q++ = '\n';
+		p = ctx->vinfo;
+		ctx->vinfo_len = 1;
+		for (; *cnt != 'e'; *p++ = *cnt++, ++ctx->vinfo_len);
+		*p++ = '\n';
 	}
 
 	write(1, str, q - str);

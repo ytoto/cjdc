@@ -1,3 +1,3 @@
 file cjdc
-b peers
-r p
+b dump
+r d

@@ -3,7 +3,7 @@
 #include "cjdc.h"
 #include "utils.h"
 
-int peers(char *page, unsigned int size)
+int peers(char *page, unsigned int size, cjdc_ctx *ctx)
 {
 	char *pk, *in, *out, *dup, *los, *oor, *sta, *swi, *usr;
 	char ip6[43], *p = page, *end = page + size;

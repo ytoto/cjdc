@@ -256,9 +256,9 @@ static char *geterror(char *p, int n)
 	return NULL;
 }
 
-typedef int parsePage(char *page, unsigned int size);
+typedef int parsePage(char *page, unsigned int size, cjdc_ctx *);
 
-static int reqPages(int fd, const char *func, parsePage *pfunc)
+static int reqPages(int fd, const char *func, parsePage *pfunc, cjdc_ctx *ctx)
 {
 	char *h, *p, *q = passwd + passwdlen, *s, req[1024], page[4096];
 	int i = 0, n;
@@ -315,7 +315,7 @@ static int reqPages(int fd, const char *func, parsePage *pfunc)
 			goto out;
 		}
 
-		n = pfunc(page, n);
+		n = pfunc(page, n, ctx);
 	} while (n > 0);
 out:
 	return n;
@@ -330,6 +330,10 @@ int main(int ac, char *av[])
 {
 	char buf[1024], *cmd = "", *p;
 	int fd = -1, ret = 1, _v = 0;
+	cjdc_ctx ctx;
+
+	/* clean context */
+	ctx.vinfo_len = 0;
 
 	/* parse options */
 	if (ac > 1) {
@@ -381,17 +385,20 @@ int main(int ac, char *av[])
 		if (_v)
 			write(1, dump_header, sizeof(dump_header) - 1);
 
-		ret = reqPages(fd, "NodeStore_dumpTable", dump);
+		ret = reqPages(fd, "NodeStore_dumpTable", dump, &ctx);
 		break;
 	case 'p': /* peers */
 		if (_v)
 			write(1, peers_header, sizeof(peers_header) - 1);
 
-		ret = reqPages(fd, "InterfaceController_peerStats", peers);
+		ret = reqPages(fd, "InterfaceController_peerStats", peers, &ctx);
 		break;
 	default:  /* help */
 		usage();
 	}
+
+	if (_v && ctx.vinfo_len > 0)
+		write(1, ctx.vinfo, ctx.vinfo_len);
 out:
 	if (ret < 0)
 		ret = -ret;

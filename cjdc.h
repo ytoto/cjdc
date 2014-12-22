@@ -13,5 +13,10 @@ extern int pubk2ip6(const char *pk, char *out/*40*/);
 extern void sha256hex(char *out/*64*/, const char *input, int size);
 
 /* commands */
-extern int dump(char *page, unsigned int size);
-extern int peers(char *page, unsigned int size);
+typedef struct {
+	int	vinfo_len;
+	char	vinfo[128];
+} cjdc_ctx;
+
+extern int dump(char *page, unsigned int size, cjdc_ctx *);
+extern int peers(char *page, unsigned int size, cjdc_ctx *);
